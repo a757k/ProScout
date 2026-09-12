@@ -1,3 +1,4 @@
+```jsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
@@ -15,15 +16,12 @@ export default function Auth() {
 
   async function submit(e) {
     e.preventDefault()
-
     setErr('')
     setBusy(true)
 
     try {
       if (mode === 'login') {
-        const {
-          error
-        } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password
         })
@@ -32,10 +30,7 @@ export default function Auth() {
 
         nav('/dashboard')
       } else {
-        const {
-          data,
-          error
-        } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -48,35 +43,19 @@ export default function Auth() {
 
         if (error) throw error
 
-        if (data.user) {
-          const {
-            error: e2
-          } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              full_name: name,
-              account_type: role,
-              email,
-              contact_email: email,
-              verification_status:
-                role === 'club'
-                  ? 'pending'
-                  : 'not_required'
-            })
+        // The Supabase database trigger creates the profile automatically.
+        // We do NOT insert into profiles from the browser.
 
-          if (
-            e2 &&
-            !e2.message.includes('duplicate')
-          ) {
-            throw e2
-          }
+        if (data.session) {
+          nav('/dashboard')
+        } else {
+          setErr(
+            'Account created successfully. Check your email to confirm your account, then log in.'
+          )
         }
-
-        nav('/dashboard')
       }
     } catch (e) {
-      setErr(e.message)
+      setErr(e.message || 'Something went wrong.')
     } finally {
       setBusy(false)
     }
@@ -84,51 +63,34 @@ export default function Auth() {
 
   return (
     <div className="auth card">
-
       <h1>
         {mode === 'login'
           ? 'Welcome back'
           : 'Create your ProScout account'}
       </h1>
 
-      {err && (
-        <div className="error">
-          {err}
-        </div>
-      )}
+      {err && <div className="error">{err}</div>}
 
       <form onSubmit={submit}>
-
         {mode === 'signup' && (
           <>
             <label>
               Full name
-
               <input
                 required
                 value={name}
-                onChange={e =>
-                  setName(e.target.value)
-                }
+                onChange={(e) => setName(e.target.value)}
               />
             </label>
 
             <label>
               Account type
-
               <select
                 value={role}
-                onChange={e =>
-                  setRole(e.target.value)
-                }
+                onChange={(e) => setRole(e.target.value)}
               >
-                <option value="player">
-                  Player
-                </option>
-
-                <option value="club">
-                  Club
-                </option>
+                <option value="player">Player</option>
+                <option value="club">Club</option>
               </select>
             </label>
           </>
@@ -136,59 +98,45 @@ export default function Auth() {
 
         <label>
           Email
-
           <input
             type="email"
             required
             value={email}
-            onChange={e =>
-              setEmail(e.target.value)
-            }
+            onChange={(e) => setEmail(e.target.value)}
           />
         </label>
 
         <label>
           Password
-
           <input
             type="password"
             minLength="6"
             required
             value={password}
-            onChange={e =>
-              setPassword(e.target.value)
-            }
+            onChange={(e) => setPassword(e.target.value)}
           />
         </label>
 
-        <button
-          className="primary"
-          disabled={busy}
-        >
+        <button className="primary" disabled={busy}>
           {busy
             ? 'Please wait…'
             : mode === 'login'
               ? 'Log in'
               : 'Sign up'}
         </button>
-
       </form>
 
       <button
         className="linkbutton"
         onClick={() =>
-          setMode(
-            mode === 'login'
-              ? 'signup'
-              : 'login'
-          )
+          setMode(mode === 'login' ? 'signup' : 'login')
         }
       >
         {mode === 'login'
           ? "Don't have an account? Sign up"
           : 'Already have an account? Log in'}
       </button>
-
     </div>
   )
 }
+```
