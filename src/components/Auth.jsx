@@ -3,90 +3,95 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 
 export default function Auth() {
+const navigate = useNavigate()
+
 const [mode, setMode] = useState('login')
 const [email, setEmail] = useState('')
 const [password, setPassword] = useState('')
 const [name, setName] = useState('')
 const [role, setRole] = useState('player')
-const [err, setErr] = useState('')
-const [busy, setBusy] = useState(false)
+const [error, setError] = useState('')
+const [loading, setLoading] = useState(false)
 
-const navigate = useNavigate()
-
-async function submit(event) {
+async function handleSubmit(event) {
 event.preventDefault()
-setErr('')
-setBusy(true)
+setError('')
+setLoading(true)
 
 ```
-try {
-  if (mode === 'login') {
-    const result = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    })
-
-    if (result.error) {
-      throw result.error
-    }
-
-    navigate('/dashboard')
-    return
-  }
-
-  const result = await supabase.auth.signUp({
+if (mode === 'login') {
+  const result = await supabase.auth.signInWithPassword({
     email: email,
-    password: password,
-    options: {
-      data: {
-        full_name: name,
-        account_type: role
-      }
-    }
+    password: password
   })
 
   if (result.error) {
-    throw result.error
+    setError(result.error.message)
+    setLoading(false)
+    return
   }
 
-  if (result.data.session) {
-    navigate('/dashboard')
-  } else {
-    setErr(
-      'Account created successfully. Check your email to confirm your account, then log in.'
-    )
-  }
-} catch (error) {
-  setErr(error?.message || 'Something went wrong.')
-} finally {
-  setBusy(false)
+  navigate('/dashboard')
+  setLoading(false)
+  return
 }
+
+const result = await supabase.auth.signUp({
+  email: email,
+  password: password,
+  options: {
+    data: {
+      full_name: name,
+      account_type: role
+    }
+  }
+})
+
+if (result.error) {
+  setError(result.error.message)
+  setLoading(false)
+  return
+}
+
+if (result.data.session) {
+  navigate('/dashboard')
+} else {
+  setError('Account created. Check your email, confirm it, then log in.')
+}
+
+setLoading(false)
 ```
 
 }
 
-function toggleMode() {
-setErr('')
-setMode(mode === 'login' ? 'signup' : 'login')
+function switchMode() {
+setError('')
+
+```
+if (mode === 'login') {
+  setMode('signup')
+} else {
+  setMode('login')
+}
+```
+
 }
 
 return ( <div className="auth card"> <h1>
-{mode === 'login'
-? 'Welcome back'
-: 'Create your ProScout account'} </h1>
+{mode === 'login' ? 'Welcome back' : 'Create your ProScout account'} </h1>
 
 ```
-  {err ? <div className="error">{err}</div> : null}
+  {error && <div className="error">{error}</div>}
 
-  <form onSubmit={submit}>
-    {mode === 'signup' ? (
+  <form onSubmit={handleSubmit}>
+    {mode === 'signup' && (
       <>
         <label>
           Full name
           <input
             type="text"
-            required
             value={name}
+            required
             onChange={(event) => setName(event.target.value)}
           />
         </label>
@@ -102,14 +107,14 @@ return ( <div className="auth card"> <h1>
           </select>
         </label>
       </>
-    ) : null}
+    )}
 
     <label>
       Email
       <input
         type="email"
-        required
         value={email}
+        required
         onChange={(event) => setEmail(event.target.value)}
       />
     </label>
@@ -118,19 +123,15 @@ return ( <div className="auth card"> <h1>
       Password
       <input
         type="password"
+        value={password}
         required
         minLength={6}
-        value={password}
         onChange={(event) => setPassword(event.target.value)}
       />
     </label>
 
-    <button
-      type="submit"
-      className="primary"
-      disabled={busy}
-    >
-      {busy
+    <button type="submit" className="primary" disabled={loading}>
+      {loading
         ? 'Please wait...'
         : mode === 'login'
           ? 'Log in'
@@ -138,13 +139,9 @@ return ( <div className="auth card"> <h1>
     </button>
   </form>
 
-  <button
-    type="button"
-    className="linkbutton"
-    onClick={toggleMode}
-  >
+  <button type="button" className="linkbutton" onClick={switchMode}>
     {mode === 'login'
-      ? "Don't have an account? Sign up"
+      ? 'Do not have an account? Sign up'
       : 'Already have an account? Log in'}
   </button>
 </div>
