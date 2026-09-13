@@ -78,7 +78,9 @@ if (mode === 'login') {
 }
 
 return ( <div className="auth card"> <h1>
-{mode === 'login' ? 'Welcome back' : 'Create your ProScout account'} </h1>
+{mode === 'login'
+? 'Welcome back'
+: 'Create your ProScout account'} </h1>
 
 ```
   {error && <div className="error">{error}</div>}
@@ -130,7 +132,11 @@ return ( <div className="auth card"> <h1>
       />
     </label>
 
-    <button type="submit" className="primary" disabled={loading}>
+    <button
+      type="submit"
+      className="primary"
+      disabled={loading}
+    >
       {loading
         ? 'Please wait...'
         : mode === 'login'
@@ -139,7 +145,11 @@ return ( <div className="auth card"> <h1>
     </button>
   </form>
 
-  <button type="button" className="linkbutton" onClick={switchMode}>
+  <button
+    type="button"
+    className="linkbutton"
+    onClick={switchMode}
+  >
     {mode === 'login'
       ? 'Do not have an account? Sign up'
       : 'Already have an account? Log in'}
