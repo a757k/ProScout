@@ -10,45 +10,51 @@ const [name, setName] = useState('')
 const [role, setRole] = useState('player')
 const [err, setErr] = useState('')
 const [busy, setBusy] = useState(false)
+
 const navigate = useNavigate()
 
-async function submit(e) {
-e.preventDefault()
+async function submit(event) {
+event.preventDefault()
 setErr('')
 setBusy(true)
 
 ```
 try {
   if (mode === 'login') {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
+    const result = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
     })
 
-    if (error) throw error
+    if (result.error) {
+      throw result.error
+    }
 
     navigate('/dashboard')
-  } else {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          account_type: role
-        }
+    return
+  }
+
+  const result = await supabase.auth.signUp({
+    email: email,
+    password: password,
+    options: {
+      data: {
+        full_name: name,
+        account_type: role
       }
-    })
-
-    if (error) throw error
-
-    if (data.session) {
-      navigate('/dashboard')
-    } else {
-      setErr(
-        'Account created successfully. Check your email to confirm your account, then log in.'
-      )
     }
+  })
+
+  if (result.error) {
+    throw result.error
+  }
+
+  if (result.data.session) {
+    navigate('/dashboard')
+  } else {
+    setErr(
+      'Account created successfully. Check your email to confirm your account, then log in.'
+    )
   }
 } catch (error) {
   setErr(error?.message || 'Something went wrong.')
@@ -59,23 +65,29 @@ try {
 
 }
 
+function toggleMode() {
+setErr('')
+setMode(mode === 'login' ? 'signup' : 'login')
+}
+
 return ( <div className="auth card"> <h1>
 {mode === 'login'
 ? 'Welcome back'
 : 'Create your ProScout account'} </h1>
 
 ```
-  {err && <div className="error">{err}</div>}
+  {err ? <div className="error">{err}</div> : null}
 
   <form onSubmit={submit}>
-    {mode === 'signup' && (
+    {mode === 'signup' ? (
       <>
         <label>
           Full name
           <input
+            type="text"
             required
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(event) => setName(event.target.value)}
           />
         </label>
 
@@ -83,14 +95,14 @@ return ( <div className="auth card"> <h1>
           Account type
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value)}
+            onChange={(event) => setRole(event.target.value)}
           >
             <option value="player">Player</option>
             <option value="club">Club</option>
           </select>
         </label>
       </>
-    )}
+    ) : null}
 
     <label>
       Email
@@ -98,7 +110,7 @@ return ( <div className="auth card"> <h1>
         type="email"
         required
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(event) => setEmail(event.target.value)}
       />
     </label>
 
@@ -106,16 +118,20 @@ return ( <div className="auth card"> <h1>
       Password
       <input
         type="password"
-        minLength="6"
         required
+        minLength={6}
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(event) => setPassword(event.target.value)}
       />
     </label>
 
-    <button className="primary" disabled={busy}>
+    <button
+      type="submit"
+      className="primary"
+      disabled={busy}
+    >
       {busy
-        ? 'Please wait…'
+        ? 'Please wait...'
         : mode === 'login'
           ? 'Log in'
           : 'Sign up'}
@@ -123,10 +139,9 @@ return ( <div className="auth card"> <h1>
   </form>
 
   <button
+    type="button"
     className="linkbutton"
-    onClick={() =>
-      setMode(mode === 'login' ? 'signup' : 'login')
-    }
+    onClick={toggleMode}
   >
     {mode === 'login'
       ? "Don't have an account? Sign up"
